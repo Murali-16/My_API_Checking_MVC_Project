@@ -1,0 +1,178 @@
+﻿@{
+    ViewBag.Title = "API Console";
+}
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
+<div class="container mt-4">
+
+    <h3>API Console</h3>
+
+    <!-- URL + METHOD -->
+    <div class="row mb-3">
+        <div class="col-md-9">
+            <input type="text" id="url" class="form-control" placeholder="Enter API URL">
+        </div>
+        <div class="col-md-3">
+            <select id="method" class="form-control">
+                <option>GET</option>
+                <option>POST</option>
+            </select>
+        </div>
+    </div>
+
+    <button class="btn btn-success mb-3" onclick="sendRequest()">Send Request</button>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link active" data-toggle="tab" href="#headers">Headers</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#body">Body</a>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3">
+
+        <!-- Headers -->
+        <div id="headers" class="tab-pane fade show active">
+            <table class="table" id="headerTable">
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Value</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input class="form-control headerKey" placeholder="Key"></td>
+                        <td><input class="form-control headerValue" placeholder="Value"></td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <button class="btn btn-primary btn-sm" onclick="addHeader()">+ Add Header</button>
+        </div>
+
+        <!-- Body -->
+        <div id="body" class="tab-pane fade">
+            <select id="bodyType" class="form-control mb-2">
+                <option value="json">JSON</option>
+                <option value="xml">XML</option>
+            </select>
+
+            <textarea id="bodyData" class="form-control" rows="5" placeholder="Request Body"></textarea>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Response Info -->
+    <p><strong>Status:</strong> <span id="status"></span></p>
+    <p><strong>Response Time:</strong> <span id="time"></span></p>
+
+    <pre id="response" class="p-3 bg-dark text-success rounded"></pre>
+
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+<script>
+
+    function addHeader() {
+        $("#headerTable tbody").append(`
+            <tr>
+                <td><input class="form-control headerKey" placeholder="Key"></td>
+                <td><input class="form-control headerValue" placeholder="Value"></td>
+                <td>
+                    <button class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button>
+                </td>
+            </tr>
+        `);
+    }
+
+    function removeRow(btn) {
+        $(btn).closest("tr").remove();
+    }
+
+    function getHeaders() {
+        let headers = {};
+        $(".headerKey").each(function (i) {
+            let key = $(this).val();
+            let value = $(".headerValue").eq(i).val();
+
+            if (key && value) headers[key] = value;
+        });
+        return headers;
+    }
+
+    function sendRequest() {
+
+        let url = $("#url").val();
+        let method = $("#method").val();
+        let body = $("#bodyData").val();
+        let bodyType = $("#bodyType").val();
+        let headers = getHeaders();
+
+        let apiUrl = method === "GET"
+            ? "/ApiConsole/SendGetRequest"
+            : "/ApiConsole/SendPostRequest";
+
+        let startTime = Date.now();
+
+        $.ajax({
+            url: apiUrl,
+            type: "POST",
+
+            data: method === "GET"
+                ? { Url: url, Headers: JSON.stringify(headers) }
+                : body,
+
+            processData: method === "GET",
+
+            contentType: method === "GET"
+                ? "application/x-www-form-urlencoded"
+                : (bodyType === "xml" ? "application/xml" : "application/json"),
+
+            headers: {
+                "Url": url,
+                "BodyType": bodyType,
+                "CustomHeaders": JSON.stringify(headers)
+            },
+
+            success: function (res, status, xhr) {
+                showResponse(res, xhr.status, startTime);
+            },
+
+            error: function (xhr) {
+                showResponse(xhr.responseText, xhr.status, startTime);
+            }
+        });
+    }
+
+    function showResponse(res, status, startTime) {
+
+        $("#time").text((Date.now() - startTime) + " ms");
+        $("#status").text(status).css("color",
+            status === 200 ? "lime" :
+                status === 404 ? "orange" : "red"
+        );
+
+        try {
+            $("#response").text(JSON.stringify(JSON.parse(res), null, 4));
+        } catch {
+            $("#response").text(formatXml(res));
+        }
+    }
+
+    function formatXml(xml) {
+        return xml.replace(/></g, ">\n<").trim();
+    }
+
+</script>
