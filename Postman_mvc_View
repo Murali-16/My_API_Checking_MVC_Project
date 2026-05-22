@@ -1,0 +1,2095 @@
+@{
+    ViewBag.Title = "API Console";
+}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<style>
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: 'Segoe UI', 'Roboto', sans-serif;
+        font-size: 12px;
+        line-height: 1.5;
+        background: #f3f4f6;
+        color: #1f2937;
+        overflow: hidden;
+    }
+
+    #app-shell {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    /* ── Top Nav ── */
+    #top-nav {
+        background: #1e1e2e;
+        border-bottom: 1px solid #2d2d3f;
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+        height: 46px;
+        flex-shrink: 0;
+        gap: 10px;
+        z-index: 100;
+    }
+
+        #top-nav .brand {
+            font-weight: 700;
+            font-size: 18px;
+            color: #f97316;
+            letter-spacing: -0.3px;
+        }
+
+            #top-nav .brand span {
+                color: #94a3b8;
+                font-size: 12px;
+                font-weight: 400;
+                margin-left: 6px;
+            }
+
+    #sidebar-toggle {
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #64748b;
+        cursor: pointer;
+        padding: 0 4px;
+        border-radius: 4px;
+    }
+
+        #sidebar-toggle:hover {
+            color: #f97316;
+            background: #2d2d3f;
+        }
+
+    /* ── Tab Bar ── */
+    #tab-bar {
+        background: #16213e;
+        border-bottom: 1px solid #0f3460;
+        display: flex;
+        align-items: flex-end;
+        padding: 0 8px;
+        height: 36px;
+        flex-shrink: 0;
+        overflow-x: auto;
+        gap: 1px;
+    }
+
+        #tab-bar::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        #tab-bar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 2px;
+        }
+
+    .req-tab {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 10px;
+        height: 30px;
+        border: 1px solid transparent;
+        border-bottom: none;
+        border-radius: 6px 6px 0 0;
+        cursor: pointer;
+        font-size: 12px;
+        color: #64748b;
+        background: transparent;
+        white-space: nowrap;
+        user-select: none;
+        transition: background 0.1s;
+        flex-shrink: 0;
+    }
+
+        .req-tab:hover {
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+
+        .req-tab.active {
+            background: #f3f4f6;
+            border-color: #0f3460;
+            border-bottom-color: #f3f4f6;
+            color: #111827;
+            font-weight: 500;
+            position: relative;
+            bottom: -1px;
+        }
+
+        .req-tab .tab-method {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+    .tab-close {
+        font-size: 14px;
+        line-height: 1;
+        color: #475569;
+        cursor: pointer;
+        padding: 0 2px;
+        border-radius: 3px;
+        margin-left: 2px;
+    }
+
+        .tab-close:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+    #btn-new-tab {
+        height: 24px;
+        padding: 0 8px;
+        border: 1px dashed #334155;
+        border-radius: 4px;
+        font-size: 18px;
+        color: #475569;
+        cursor: pointer;
+        background: transparent;
+        line-height: 1;
+        margin-bottom: 4px;
+        transition: all 0.15s;
+    }
+
+        #btn-new-tab:hover {
+            border-color: #f97316;
+            color: #f97316;
+        }
+
+    /* ── Body Layout ── */
+    #body-layout {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+        width: 260px;
+        flex-shrink: 0;
+        background: #1e1e2e;
+        border-right: 1px solid #2d2d3f;
+        display: flex;
+        flex-direction: column;
+        transition: width 0.2s ease;
+        overflow: hidden;
+    }
+
+        #sidebar.collapsed {
+            width: 0;
+        }
+
+    #sidebar-header {
+        padding: 10px 12px 8px;
+        border-bottom: 1px solid #2d2d3f;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+    }
+
+        #sidebar-header .hdr-title {
+            font-weight: 600;
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+    #btn-add-collection {
+        background: #f97316;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 3px 10px;
+        font-size: 11px;
+        cursor: pointer;
+        font-weight: 500;
+        letter-spacing: 0.2px;
+    }
+
+        #btn-add-collection:hover {
+            background: #ea6c07;
+        }
+
+    #collection-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 0;
+    }
+
+        #collection-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #collection-list::-webkit-scrollbar-thumb {
+            background: #2d2d3f;
+            border-radius: 2px;
+        }
+
+    /* Collection group */
+    .col-group {
+        margin-bottom: 2px;
+    }
+
+    .col-group-hdr {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 12px;
+        color: #94a3b8;
+        border-radius: 5px;
+        margin: 0 4px;
+        user-select: none;
+        position: relative;
+    }
+
+        .col-group-hdr:hover {
+            background: #2d2d3f;
+            color: #e2e8f0;
+        }
+
+        .col-group-hdr .col-icon {
+            font-size: 10px;
+            color: #475569;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        .col-group-hdr.open .col-icon {
+            transform: rotate(90deg);
+        }
+
+        .col-group-hdr .col-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .col-group-hdr .col-count {
+            font-size: 10px;
+            color: #475569;
+            background: #2d2d3f;
+            border-radius: 10px;
+            padding: 0 6px;
+            font-weight: 400;
+        }
+
+        .col-group-hdr .col-actions {
+            display: none;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+
+        .col-group-hdr:hover .col-actions {
+            display: flex;
+        }
+
+    .col-act-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #64748b;
+        font-size: 13px;
+        padding: 2px 4px;
+        border-radius: 3px;
+        line-height: 1;
+    }
+
+        .col-act-btn:hover {
+            color: #f97316;
+            background: rgba(249,115,22,0.1);
+        }
+
+        .col-act-btn.danger:hover {
+            color: #ef4444;
+            background: rgba(239,68,68,0.1);
+        }
+
+    /* Collection items */
+    .col-items {
+        display: none;
+    }
+
+        .col-items.open {
+            display: block;
+        }
+
+    .col-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px 6px 28px;
+        cursor: pointer;
+        font-size: 12px;
+        color: #64748b;
+        border-radius: 4px;
+        margin: 1px 4px;
+        user-select: none;
+        position: relative;
+    }
+
+        .col-item:hover {
+            background: #2d2d3f;
+            color: #e2e8f0;
+        }
+
+        .col-item.active {
+            background: rgba(249,115,22,0.12);
+            color: #f97316;
+        }
+
+        .col-item .item-method {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 3px;
+            min-width: 34px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .col-item .item-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .col-item .item-actions {
+            display: none;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+
+        .col-item:hover .item-actions {
+            display: flex;
+        }
+
+    .item-act-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #64748b;
+        font-size: 12px;
+        padding: 1px 3px;
+        border-radius: 3px;
+        line-height: 1;
+    }
+
+        .item-act-btn:hover {
+            color: #f97316;
+        }
+
+        .item-act-btn.danger:hover {
+            color: #ef4444;
+        }
+
+    /* Method badge colours */
+    .m-get {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .m-post {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .m-put {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .m-delete {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .m-patch {
+        background: #ede9fe;
+        color: #5b21b6;
+    }
+
+    /* empty state */
+    .sidebar-empty {
+        padding: 24px 16px;
+        text-align: center;
+        color: #475569;
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+        .sidebar-empty .empty-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+    /* ── Main Panel ── */
+    #main-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #f3f4f6;
+    }
+
+    /* ── Request Card ── */
+    #req-card {
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 12px 14px 0;
+        flex-shrink: 0;
+    }
+
+    .url-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+
+    #method {
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        outline: none;
+        min-width: 90px;
+        background: #f9fafb;
+    }
+
+    #url {
+        flex: 1;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 13px;
+        outline: none;
+        color: #111827;
+        font-family: 'Consolas', monospace;
+    }
+
+        #url:focus {
+            border-color: #f97316;
+            box-shadow: 0 0 0 2px #fed7aa44;
+        }
+
+    #btn-send {
+        background: #f97316;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 6px 18px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        white-space: nowrap;
+        position: relative;
+        overflow: hidden;
+        min-width: 72px;
+        transition: background 0.2s;
+    }
+
+        #btn-send:hover {
+            background: #ea6c07;
+        }
+
+        #btn-send.loading {
+            background: #c2410c;
+            pointer-events: none;
+            opacity: 0.9;
+        }
+
+        #btn-send .btn-label {
+            transition: opacity 0.15s;
+        }
+
+        #btn-send.loading .btn-label {
+            opacity: 0;
+        }
+
+    #send-spinner {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%,-50%);
+        width: 16px;
+        height: 16px;
+        border: 2.5px solid rgba(255,255,255,0.35);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: btn-spin 0.65s linear infinite;
+    }
+
+    #btn-send.loading #send-spinner {
+        display: block;
+    }
+
+    @@keyframes btn-spin {
+        to {
+            transform: translate(-50%,-50%) rotate(360deg);
+        }
+    }
+
+    #btn-save-req {
+        background: transparent;
+        color: #6b7280;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+        #btn-save-req:hover {
+            border-color: #f97316;
+            color: #f97316;
+            background: #fff7ed;
+        }
+
+    /* ── Inner Tabs ── */
+    .inner-tab-bar {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .inner-tab {
+        padding: 7px 14px;
+        font-size: 12px;
+        color: #6b7280;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        font-weight: 400;
+    }
+
+        .inner-tab:hover {
+            color: #374151;
+        }
+
+        .inner-tab.active {
+            color: #f97316;
+            border-bottom-color: #f97316;
+            font-weight: 500;
+        }
+
+    .inner-tab-content {
+        display: none;
+        padding: 10px 0;
+    }
+
+        .inner-tab-content.active {
+            display: block;
+        }
+
+    /* ── KV Table ── */
+    .kv-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+
+        .kv-table th {
+            color: #6b7280;
+            font-weight: 500;
+            padding: 4px 6px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            font-size: 11px;
+            letter-spacing: 0.3px;
+        }
+
+        .kv-table td {
+            padding: 3px 4px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .kv-table input[type="text"] {
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 4px 7px;
+            font-size: 12px;
+            color: #111827;
+            outline: none;
+            background: #fafafa;
+        }
+
+            .kv-table input[type="text"]:focus {
+                border-color: #f97316;
+                background: #fff;
+            }
+
+        .kv-table input[type="checkbox"] {
+            accent-color: #f97316;
+            cursor: pointer;
+        }
+
+    .btn-add-row {
+        background: none;
+        border: 1px dashed #d1d5db;
+        border-radius: 4px;
+        padding: 3px 10px;
+        font-size: 11px;
+        color: #6b7280;
+        cursor: pointer;
+        margin-top: 6px;
+    }
+
+        .btn-add-row:hover {
+            border-color: #f97316;
+            color: #f97316;
+        }
+
+    .btn-del-row {
+        background: none;
+        border: none;
+        color: #ef4444;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 0 4px;
+    }
+
+    /* ── Body Toolbar ── */
+    .body-toolbar {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 6px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-body {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 5px;
+        padding: 3px 10px;
+        font-size: 11px;
+        color: #374151;
+        cursor: pointer;
+        transition: all 0.12s;
+    }
+
+        .btn-body:hover {
+            border-color: #f97316;
+            color: #f97316;
+            background: #fff7ed;
+        }
+
+        .btn-body.danger:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+            background: #fef2f2;
+        }
+
+    .detect-badge {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 9px;
+        border-radius: 20px;
+        display: none;
+    }
+
+    .detect-json {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .detect-xml {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .detect-text {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    #bodyValidMsg {
+        font-size: 11px;
+    }
+
+    #bodyData {
+        width: 100%;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 8px;
+        font-family: 'Consolas', monospace;
+        font-size: 12px;
+        resize: vertical;
+        min-height: 80px;
+        color: #111827;
+        outline: none;
+    }
+
+        #bodyData:focus {
+            border-color: #f97316;
+        }
+
+        #bodyData.flash-ok {
+            border-color: #34d399 !important;
+        }
+
+        #bodyData.flash-error {
+            border-color: #f87171 !important;
+        }
+
+    /* ── Response Card ── */
+    #res-card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #ffffff;
+        margin: 10px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+    }
+
+    #res-header {
+        padding: 8px 14px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+        font-size: 12px;
+    }
+
+    .status-badge {
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 12px;
+    }
+
+    .status-2xx {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-4xx {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-5xx {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-def {
+        background: #e5e7eb;
+        color: #374151;
+    }
+
+    #res-tabs {
+        display: flex;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 0 14px;
+        flex-shrink: 0;
+    }
+
+    .res-tab {
+        padding: 6px 12px;
+        font-size: 12px;
+        color: #6b7280;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+    }
+
+        .res-tab:hover {
+            color: #111827;
+        }
+
+        .res-tab.active {
+            color: #f97316;
+            border-bottom-color: #f97316;
+            font-weight: 500;
+        }
+
+    #res-body-wrap {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px 14px;
+    }
+
+    pre#response {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 12px;
+        font-family: 'Consolas', monospace;
+        font-size: 12px;
+        color: #111827;
+        white-space: pre-wrap;
+        word-break: break-all;
+        margin: 0;
+    }
+
+    .jk {
+        color: #1d4ed8;
+    }
+
+    .js {
+        color: #b45309;
+    }
+
+    .jn {
+        color: #6d28d9;
+    }
+
+    .jb {
+        color: #047857;
+    }
+
+    .jl {
+        color: #9ca3af;
+    }
+
+    #res-headers-tab {
+        padding: 10px 14px;
+        overflow-y: auto;
+        display: none;
+        flex: 1;
+    }
+
+    .res-hdr-row {
+        display: flex;
+        gap: 8px;
+        padding: 5px 0;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 12px;
+    }
+
+    .res-hdr-key {
+        color: #1d4ed8;
+        font-weight: 500;
+        min-width: 200px;
+        font-family: 'Consolas', monospace;
+    }
+
+    .res-hdr-val {
+        color: #374151;
+    }
+
+    /* ── Page Loader ── */
+    #page-loader {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(255,255,255,0.6);
+        backdrop-filter: blur(2px);
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+        #page-loader.show {
+            display: flex;
+        }
+
+    .loader-ring {
+        width: 52px;
+        height: 52px;
+        border: 5px solid #fed7aa;
+        border-top-color: #f97316;
+        border-radius: 50%;
+        animation: ring-spin 0.75s linear infinite;
+    }
+
+    @@keyframes ring-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .loader-text {
+        font-size: 13px;
+        font-weight: 600;
+        color: #f97316;
+        letter-spacing: 0.3px;
+    }
+
+    /* ── Context Menu ── */
+    #ctx-menu {
+        position: fixed;
+        z-index: 8000;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        padding: 4px 0;
+        min-width: 170px;
+        display: none;
+        animation: ctxFade 0.1s ease;
+    }
+
+    @@keyframes ctxFade {
+        from {
+            opacity: 0;
+            transform: scale(0.96);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .ctx-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        font-size: 12px;
+        color: #374151;
+        cursor: pointer;
+        transition: background 0.08s;
+    }
+
+        .ctx-item:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .ctx-item .ctx-icon {
+            font-size: 14px;
+            width: 16px;
+            text-align: center;
+        }
+
+        .ctx-item.danger {
+            color: #dc2626;
+        }
+
+            .ctx-item.danger:hover {
+                background: #fef2f2;
+            }
+
+    .ctx-sep {
+        height: 1px;
+        background: #e5e7eb;
+        margin: 4px 0;
+    }
+
+    /* ── Modal ── */
+    .modal-header {
+        background: #1e1e2e;
+        color: #fff;
+        border-bottom: 1px solid #2d2d3f;
+    }
+
+        .modal-header .close {
+            color: #94a3b8;
+            opacity: 1;
+        }
+
+            .modal-header .close:hover {
+                color: #fff;
+            }
+
+    .modal-title {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    /* ── Auth ── */
+    #authFields .form-control {
+        margin-bottom: 6px;
+    }
+
+    #authFields label {
+        font-size: 11px;
+        color: #6b7280;
+        margin-bottom: 2px;
+        display: block;
+    }
+
+    .form-control {
+        font-size: 12px;
+        height: 34px;
+        padding: 5px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+    }
+
+        .form-control:focus {
+            border-color: #f97316;
+            box-shadow: 0 0 0 2px #fed7aa44;
+            outline: none;
+        }
+
+    /* ── Notification Toast ── */
+    #toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: #1e1e2e;
+        color: #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 12px;
+        font-weight: 500;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        display: none;
+        border-left: 3px solid #f97316;
+        max-width: 260px;
+    }
+
+        #toast.show {
+            display: block;
+            animation: toastIn 0.2s ease;
+        }
+
+    @@keyframes toastIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ── Request name in header ── */
+    #req-name-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px 0;
+        font-size: 12px;
+    }
+
+    #req-display-name {
+        font-weight: 600;
+        color: #374151;
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+        #req-display-name:hover {
+            color: #f97316;
+        }
+
+    .req-breadcrumb {
+        color: #9ca3af;
+        font-size: 11px;
+    }
+</style>
+<!-- Page Loader -->
+<div id="page-loader">
+    <div class="loader-ring"></div>
+    <div class="loader-text">Sending request...</div>
+</div>
+<!-- Context Menu -->
+<div id="ctx-menu">
+    <div class="ctx-item" id="ctx-rename-col" onclick="ctxAction('rename-col')"><span class="ctx-icon">✏️</span> Rename Collection</div>
+    <div class="ctx-item" id="ctx-add-req" onclick="ctxAction('add-req')"><span class="ctx-icon">➕</span> Add Request</div>
+    <div class="ctx-sep" id="ctx-sep-1"></div>
+    <div class="ctx-item danger" id="ctx-del-col" onclick="ctxAction('del-col')"><span class="ctx-icon">🗑</span> Delete Collection</div>
+    <div class="ctx-item" id="ctx-rename-req" onclick="ctxAction('rename-req')"><span class="ctx-icon">✏️</span> Rename Request</div>
+    <div class="ctx-item" id="ctx-edit-req" onclick="ctxAction('edit-req')"><span class="ctx-icon">⚙️</span> Edit &amp; Open</div>
+    <div class="ctx-item" id="ctx-dup-req" onclick="ctxAction('dup-req')"><span class="ctx-icon">📋</span> Duplicate</div>
+    <div class="ctx-sep" id="ctx-sep-2"></div>
+    <div class="ctx-item danger" id="ctx-del-req" onclick="ctxAction('del-req')"><span class="ctx-icon">🗑</span> Delete Request</div>
+</div>
+<!-- Toast -->
+<div id="toast"></div>
+<!-- APP SHELL -->
+<div id="app-shell">
+    <!-- Top Nav -->
+    <div id="top-nav">
+        <button id="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
+        <div class="brand">API Console <span>REST Client</span></div>
+    </div>
+    <!-- Tab Bar -->
+    <div id="tab-bar">
+        <button id="btn-new-tab" onclick="addNewTab()" title="New request tab">+</button>
+    </div>
+    <!-- Body -->
+    <div id="body-layout">
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <div id="sidebar-header">
+                <span class="hdr-title">&#128193; Collections</span>
+                <button id="btn-add-collection" onclick="openAddCollectionModal()">+ New</button>
+            </div>
+            <div id="collection-list"></div>
+        </div>
+        <!-- Main Panel -->
+        <div id="main-panel">
+            <!-- Request Card -->
+            <div id="req-card">
+                <div id="req-name-bar">
+                    <span id="req-display-name" onclick="openRenameReqModal()" title="Click to rename">New Request</span>
+                    <span class="req-breadcrumb" id="req-breadcrumb"></span>
+                </div>
+                <div class="url-row" style="margin-top:8px">
+                    <select id="method" onchange="onMethodChange()">
+                        <option>GET</option>
+                        <option>POST</option>
+                        <option>PUT</option>
+                        <option>DELETE</option>
+                        <option>PATCH</option>
+                    </select>
+                    <input type="text" id="url" placeholder="https://api.example.com/endpoint" autocomplete="off" oninput="syncActiveTab()">
+                    <button id="btn-send" onclick="sendRequest()">
+                        <span id="send-spinner"></span>
+                        <span class="btn-label">Send</span>
+                    </button>
+                    <button id="btn-save-req" onclick="openSaveModal()">&#128190; Save</button>
+                </div>
+                <div class="inner-tab-bar">
+                    <div class="inner-tab active" onclick="switchInnerTab(this,'it-params')">Params</div>
+                    <div class="inner-tab" onclick="switchInnerTab(this,'it-auth')">Authorization</div>
+                    <div class="inner-tab" onclick="switchInnerTab(this,'it-headers')">Headers</div>
+                    <div class="inner-tab" onclick="switchInnerTab(this,'it-body')">Body</div>
+                </div>
+                <!-- Params -->
+                <div id="it-params" class="inner-tab-content active">
+                    <table class="kv-table">
+                        <thead><tr><th></th><th>Key</th><th>Value</th><th>Description</th><th></th></tr></thead>
+                        <tbody id="paramsBody"></tbody>
+                    </table>
+                    <button class="btn-add-row" onclick="addKvRow('paramsBody','pk','pv')">+ Add Param</button>
+                </div>
+                <!-- Auth -->
+                <div id="it-auth" class="inner-tab-content">
+                    <select id="authType" class="form-control mb-2" style="max-width:200px" onchange="renderAuthFields()">
+                        <option value="none">No Auth</option>
+                        <option value="basic">Basic Auth</option>
+                        <option value="bearer">Bearer Token</option>
+                        <option value="aws">AWS Signature</option>
+                    </select>
+                    <div id="authFields"></div>
+                </div>
+                <!-- Headers -->
+                <div id="it-headers" class="inner-tab-content">
+                    <table class="kv-table">
+                        <thead><tr><th></th><th>Key</th><th>Value</th><th></th></tr></thead>
+                        <tbody id="headersBody"></tbody>
+                    </table>
+                    <button class="btn-add-row" onclick="addKvRow('headersBody','hk','hv')">+ Add Header</button>
+                </div>
+                <!-- Body -->
+                <div id="it-body" class="inner-tab-content">
+                    <div class="body-toolbar">
+                        <select id="bodyType" class="form-control" style="max-width:110px" onchange="onBodyTypeChange()">
+                            <option value="json">JSON</option>
+                            <option value="xml">XML</option>
+                            <option value="text">Text</option>
+                        </select>
+                        <span id="bodyDetectBadge" class="detect-badge"></span>
+                        <button class="btn-body" onclick="beautifyBody()">&#11088; Beautify</button>
+                        <button class="btn-body danger" onclick="clearBody()">&#215; Clear</button>
+                        <span id="bodyValidMsg"></span>
+                    </div>
+                    <textarea id="bodyData" rows="5" placeholder="Paste JSON, XML or text..." oninput="onBodyInput()"></textarea>
+                </div>
+            </div>
+            <!-- Response Card -->
+            <div id="res-card">
+                <div id="res-header">
+                    <span style="color:#374151;font-weight:600;font-size:12px">Response</span>
+                    <span id="statusBadge" class="status-badge status-def">--</span>
+                    <span id="time" style="color:#6b7280"></span>
+                    <span id="sizeLabel" style="color:#6b7280"></span>
+                    <div style="flex:1"></div>
+                    <button id="copyBtn" class="btn btn-sm btn-outline-secondary" onclick="copyResponse()" style="display:none;font-size:11px">Copy</button>
+                </div>
+                <div id="res-tabs">
+                    <div class="res-tab active" onclick="switchResTab(this,'res-body-wrap')">Body</div>
+                    <div class="res-tab" onclick="switchResTab(this,'res-headers-tab')">Headers</div>
+                </div>
+                <div id="res-body-wrap">
+                    <pre id="response" style="color:#9ca3af;font-style:italic">Response will appear here...</pre>
+                </div>
+                <div id="res-headers-tab">
+                    <div id="res-headers-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ════════════════ MODALS ════════════════ -->
+<!-- Save Request Modal -->
+<div class="modal fade" id="saveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">&#128190; Save Request</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label style="font-size:12px;font-weight:600">Request Name</label>
+                    <input id="saveReqName" class="form-control" placeholder="e.g. Get All Users">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:12px;font-weight:600">Collection</label>
+                    <select id="saveCollection" class="form-control"></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                <button class="btn btn-sm" style="background:#f97316;color:#fff" onclick="saveRequest()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add / Rename Collection Modal -->
+<div class="modal fade" id="colModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="colModalTitle">New Collection</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <label style="font-size:12px;font-weight:600">Collection Name</label>
+                <input id="colNameInput" class="form-control" placeholder="e.g. User API">
+                <div id="colModalDesc" style="font-size:11px;color:#6b7280;margin-top:6px"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                <button class="btn btn-sm" id="colModalSaveBtn" style="background:#f97316;color:#fff">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add / Rename / Edit Request Modal -->
+<div class="modal fade" id="reqModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reqModalTitle">Edit Request</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label style="font-size:12px;font-weight:600">Request Name</label>
+                    <input id="reqModalName" class="form-control" placeholder="e.g. Get User By ID">
+                </div>
+                <div id="reqModalUrlRow" class="form-group">
+                    <label style="font-size:12px;font-weight:600">Method</label>
+                    <select id="reqModalMethod" class="form-control mb-2" style="max-width:120px">
+                        <option>GET</option>
+                        <option>POST</option>
+                        <option>PUT</option>
+                        <option>DELETE</option>
+                        <option>PATCH</option>
+                    </select>
+                    <label style="font-size:12px;font-weight:600">URL</label>
+                    <input id="reqModalUrl" class="form-control" placeholder="https://api.example.com/users">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                <button class="btn btn-sm" id="reqModalSaveBtn" style="background:#f97316;color:#fff">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+'use strict';
+
+/* ════════════════════════════════════════
+   STATE
+════════════════════════════════════════ */
+var tabs         = [];
+var activeTabId  = null;
+var tabCounter   = 0;
+var collections  = [];
+
+var STORAGE_KEY  = 'apiconsole_v3';   /* single key stores everything */
+
+/* Context-menu state */
+var ctxColId  = null;
+var ctxItemId = null;
+var ctxMode   = null;  /* 'col' | 'req' */
+
+/* ════════════════════════════════════════
+   PERSIST  (single localStorage key)
+════════════════════════════════════════ */
+function persist() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            collections: collections,
+            tabs: tabs.map(function(t){ return {
+                id:t.id, name:t.name, method:t.method, url:t.url,
+                authType:t.authType||'none', authUser:t.authUser||'',
+                authPass:t.authPass||'', authToken:t.authToken||'',
+                authAK:t.authAK||'', authSK:t.authSK||'',
+                bodyType:t.bodyType||'json', bodyData:t.bodyData||'',
+                params:t.params||[], headers:t.headers||[],
+                innerTab:t.innerTab||0
+            }; }),
+            activeTabId: activeTabId
+        }));
+    } catch(e){}
+}
+
+function hydrate() {
+    try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        var data = JSON.parse(raw);
+        if (data.collections) collections = data.collections;
+        if (data.tabs && data.tabs.length) {
+            tabs = data.tabs;
+            tabCounter = tabs.length + 1;
+            activeTabId = data.activeTabId || tabs[0].id;
+            return true;
+        }
+    } catch(e){}
+    return false;
+}
+
+/* ════════════════════════════════════════
+   INIT
+════════════════════════════════════════ */
+$(function () {
+    var restored = hydrate();
+    if (!restored) addNewTab();
+    else {
+        renderTabBar();
+        activateTab(activeTabId);
+    }
+    renderCollections();
+    /* global click hides ctx menu */
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#ctx-menu').length) hideCtx();
+    });
+    /* keyboard */
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') hideCtx();
+        if ((e.ctrlKey||e.metaKey) && e.key === 's') { e.preventDefault(); openSaveModal(); }
+        if ((e.ctrlKey||e.metaKey) && e.key === 't') { e.preventDefault(); addNewTab(); }
+    });
+});
+
+/* ════════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════════ */
+function toggleSidebar() { $('#sidebar').toggleClass('collapsed'); }
+
+/* ════════════════════════════════════════
+   TABS
+════════════════════════════════════════ */
+function addNewTab(name, method, url, params, headers, authData) {
+    tabCounter++;
+    var id  = 'tab-' + tabCounter;
+    var tab = {
+        id:id, name:name||'New Request', method:method||'GET', url:url||'',
+        authType:(authData&&authData.authType)||'none',
+        authUser:(authData&&authData.authUser)||'',
+        authPass:(authData&&authData.authPass)||'',
+        authToken:(authData&&authData.authToken)||'',
+        authAK:(authData&&authData.authAK)||'',
+        authSK:(authData&&authData.authSK)||'',
+        bodyType:'json', bodyData:'',
+        params:params||[], headers:headers||[],
+        innerTab:0
+    };
+    tabs.push(tab);
+    renderTabBar();
+    activateTab(id);
+}
+
+function renderTabBar() {
+    $('#tab-bar .req-tab').remove();
+    tabs.forEach(function(t) {
+        var cls  = methodCls(t.method);
+        var html = '<div class="req-tab' + (t.id===activeTabId?' active':'') + '" onclick="activateTab(\''+t.id+'\')" title="'+escHtml(t.name)+'">'
+                 + '<span class="tab-method '+cls+'">'+t.method+'</span>'
+                 + '<span class="tab-label" style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(t.name)+'</span>'
+                 + '<span class="tab-close" onclick="closeTab(event,\''+t.id+'\')">&#215;</span>'
+                 + '</div>';
+        $('#btn-new-tab').before(html);
+    });
+}
+
+function captureTabState(tabId) {
+    var t = getTab(tabId); if (!t) return;
+    t.method    = $('#method').val();
+    t.url       = $('#url').val();
+    t.authType  = $('#authType').val();
+    t.authUser  = $('#authUser').val()||'';
+    t.authPass  = $('#authPass').val()||'';
+    t.authToken = $('#authToken').val()||'';
+    t.authAK    = $('#authAK').val()||'';
+    t.authSK    = $('#authSK').val()||'';
+    t.bodyType  = $('#bodyType').val();
+    t.bodyData  = $('#bodyData').val();
+    t.params    = serializeKv('paramsBody');
+    t.headers   = serializeKv('headersBody');
+    t.innerTab  = $('.inner-tab.active').index('.inner-tab');
+    persist();
+}
+
+function saveResponseToTab(tabId) {
+    var t = getTab(tabId); if (!t) return;
+    t.response = {
+        bodyHtml:    $('#response').html(),
+        bodyStyle:   { color:$('#response').css('color'), fontStyle:$('#response').css('font-style') },
+        statusText:  $('#statusBadge').text(),
+        statusClass: $('#statusBadge').attr('class'),
+        time:        $('#time').text(),
+        size:        $('#sizeLabel').text(),
+        copyVisible: $('#copyBtn').is(':visible'),
+        headerHtml:  $('#res-headers-list').html()
+    };
+}
+
+function restoreResponseFromTab(t) {
+    resetResTab();
+    if (!t.response) {
+        $('#response').html('Response will appear here...').css({color:'#9ca3af',fontStyle:'italic'});
+        $('#statusBadge').attr('class','status-badge status-def').text('--');
+        $('#time, #sizeLabel').text(''); $('#copyBtn').hide(); $('#res-headers-list').html('');
+        return;
+    }
+    var r = t.response;
+    $('#response').html(r.bodyHtml).css(r.bodyStyle);
+    $('#statusBadge').attr('class',r.statusClass).text(r.statusText);
+    $('#time').text(r.time); $('#sizeLabel').text(r.size);
+    r.copyVisible ? $('#copyBtn').show() : $('#copyBtn').hide();
+    $('#res-headers-list').html(r.headerHtml||'');
+}
+
+function activateTab(id) {
+    if (activeTabId && activeTabId !== id) { captureTabState(activeTabId); saveResponseToTab(activeTabId); }
+    activeTabId = id;
+    var t = getTab(id); if (!t) return;
+    restoreTabState(t);
+    renderTabBar();
+    persist();
+}
+
+function closeTab(e, id) {
+    e.stopPropagation();
+    if (activeTabId === id) captureTabState(id);
+    tabs = tabs.filter(function(t){ return t.id!==id; });
+    if (!tabs.length) { addNewTab(); return; }
+    if (activeTabId === id) activateTab(tabs[tabs.length-1].id);
+    else renderTabBar();
+    persist();
+}
+
+function restoreTabState(t) {
+    $('#method').val(t.method||'GET');
+    $('#url').val(t.url||'');
+    onMethodChange();
+    $('#authType').val(t.authType||'none');
+    renderAuthFields();
+    if (t.authUser)  try{ $('#authUser').val(t.authUser); }catch(e){}
+    if (t.authPass)  try{ $('#authPass').val(t.authPass); }catch(e){}
+    if (t.authToken) try{ $('#authToken').val(t.authToken); }catch(e){}
+    if (t.authAK)    try{ $('#authAK').val(t.authAK); }catch(e){}
+    if (t.authSK)    try{ $('#authSK').val(t.authSK); }catch(e){}
+    $('#bodyType').val(t.bodyType||'json');
+    $('#bodyData').val(t.bodyData||'');
+    onBodyInput();
+    restoreKv('paramsBody','pk','pv',t.params,true);
+    restoreKv('headersBody','hk','hv',t.headers,false);
+    var panels=['it-params','it-auth','it-headers','it-body'];
+    var idx=t.innerTab||0;
+    $('.inner-tab').removeClass('active'); $('.inner-tab-content').removeClass('active');
+    $('.inner-tab').eq(idx).addClass('active'); $('#'+panels[idx]).addClass('active');
+    /* update name bar */
+    $('#req-display-name').text(t.name||'New Request');
+    updateBreadcrumb(t);
+    restoreResponseFromTab(t);
+}
+
+function syncActiveTab() {
+    var t = getTab(activeTabId); if (!t) return;
+    t.url    = $('#url').val();
+    t.method = $('#method').val();
+    var parts = t.url.replace(/\?.*/,'').split('/').filter(Boolean);
+    /* only auto-name if still the default */
+    if (t.name === 'New Request' || t.name === '') {
+        t.name = parts.length ? parts[parts.length-1] : 'New Request';
+        $('#req-display-name').text(t.name);
+    }
+    renderTabBar();
+}
+
+function onMethodChange() {
+    syncActiveTab();
+    var m = $('#method').val();
+    var colMap={GET:'#1d4ed8',POST:'#065f46',PUT:'#92400e',DELETE:'#991b1b',PATCH:'#5b21b6'};
+    $('#method').css('color', colMap[m]||'#374151');
+}
+
+function getTab(id){ return tabs.find(function(t){ return t.id===id; }); }
+
+/* breadcrumb: shows which collection the active tab belongs to */
+function updateBreadcrumb(t) {
+    var found = '';
+    collections.forEach(function(col) {
+        col.items.forEach(function(item) {
+            if (item.name === t.name && item.url === t.url && item.method === t.method) found = col.name;
+        });
+    });
+    $('#req-breadcrumb').text(found ? '— '+found : '');
+}
+
+/* ════════════════════════════════════════
+   KV ROWS
+════════════════════════════════════════ */
+function addKvRow(tbodyId, keyClass, valClass) {
+    var desc = tbodyId==='paramsBody' ? '<td><input type="text" placeholder="Description"></td>' : '';
+    var row  = '<tr>'
+             + '<td style="width:28px"><input type="checkbox" checked style="accent-color:#f97316"></td>'
+             + '<td><input type="text" class="'+keyClass+'" placeholder="Key"></td>'
+             + '<td><input type="text" class="'+valClass+'" placeholder="Value"></td>'
+             + desc
+             + '<td style="width:28px"><button class="btn-del-row" onclick="$(this).closest(\'tr\').remove()">&#215;</button></td>'
+             + '</tr>';
+    $('#'+tbodyId).append(row);
+}
+
+function serializeKv(tbodyId) {
+    var rows=[];
+    $('#'+tbodyId+' tr').each(function() {
+        var cells=$(this).find('input[type="text"]');
+        rows.push({ key:cells.eq(0).val(), value:cells.eq(1).val(), desc:cells.eq(2).val()||'', enabled:$(this).find('input[type="checkbox"]').prop('checked') });
+    });
+    return rows;
+}
+
+function restoreKv(tbodyId, keyClass, valClass, rows, hasDesc) {
+    $('#'+tbodyId).empty();
+    if (!rows||!rows.length){ addKvRow(tbodyId,keyClass,valClass); return; }
+    rows.forEach(function(r) {
+        var desc = hasDesc ? '<td><input type="text" placeholder="Description" value="'+escHtml(r.desc||'')+'"></td>' : '';
+        var row  = '<tr>'
+                 + '<td style="width:28px"><input type="checkbox"'+(r.enabled?' checked':'')+' style="accent-color:#f97316"></td>'
+                 + '<td><input type="text" class="'+keyClass+'" placeholder="Key" value="'+escHtml(r.key||'')+'"></td>'
+                 + '<td><input type="text" class="'+valClass+'" placeholder="Value" value="'+escHtml(r.value||'')+'"></td>'
+                 + desc
+                 + '<td style="width:28px"><button class="btn-del-row" onclick="$(this).closest(\'tr\').remove()">&#215;</button></td>'
+                 + '</tr>';
+        $('#'+tbodyId).append(row);
+    });
+}
+
+function getKvPairs(keyClass, valClass) {
+    var data={};
+    $('.'+keyClass).each(function(i){
+        var k=$(this).val().trim(), v=$('.'+valClass).eq(i).val().trim();
+        var checked=$(this).closest('tr').find('input[type="checkbox"]').prop('checked');
+        if(k&&checked) data[k]=v;
+    });
+    return data;
+}
+
+/* ════════════════════════════════════════
+   AUTH
+════════════════════════════════════════ */
+function renderAuthFields() {
+    var type=$('#authType').val(), html='';
+    if(type==='basic') {
+        html='<div class="row"><div class="col-md-6"><label>Username</label><input id="authUser" class="form-control"></div>'
+            +'<div class="col-md-6"><label>Password</label><input id="authPass" type="password" class="form-control"></div></div>';
+    } else if(type==='bearer') {
+        html='<label>Token</label><input id="authToken" class="form-control" placeholder="Bearer token...">';
+    } else if(type==='aws') {
+        html='<div class="row"><div class="col-md-6"><label>Access Key</label><input id="authAK" class="form-control"></div>'
+            +'<div class="col-md-6"><label>Secret Key</label><input id="authSK" type="password" class="form-control"></div></div>';
+    }
+    $('#authFields').html(html);
+}
+
+/* ════════════════════════════════════════
+   BODY
+════════════════════════════════════════ */
+function detectBodyType(raw) {
+    var s=raw.trim(); if(!s) return 'text';
+    if(s[0]==='{' || s[0]==='['){try{JSON.parse(s);return 'json';}catch(e){}}
+    if(s[0]==='<') return 'xml';
+    return 'text';
+}
+function onBodyInput() {
+    var raw=$('#bodyData').val(), type=detectBodyType(raw);
+    $('#bodyType').val(type);
+    var labels={json:'&#9679; JSON',xml:'&#9679; XML',text:'&#9679; Text'};
+    var cls={json:'detect-json',xml:'detect-xml',text:'detect-text'};
+    var badge=$('#bodyDetectBadge');
+    if(raw.trim()){ badge.attr('class','detect-badge '+cls[type]).html(labels[type]).show(); validateBody(raw,type); }
+    else { badge.hide(); $('#bodyValidMsg').text(''); }
+}
+function onBodyTypeChange(){ var raw=$('#bodyData').val().trim(); if(raw) validateBody(raw,$('#bodyType').val()); }
+function validateBody(raw,type) {
+    var msg=$('#bodyValidMsg');
+    if(type==='json'){ try{JSON.parse(raw);msg.text('✔ Valid JSON').css('color','#065f46');}catch(e){msg.text('✖ '+e.message.split('\n')[0]).css('color','#991b1b');} }
+    else if(type==='xml'){ var doc=new DOMParser().parseFromString(raw,'application/xml'); doc.querySelector('parsererror')?msg.text('✖ Invalid XML').css('color','#991b1b'):msg.text('✔ Valid XML').css('color','#065f46'); }
+    else { msg.text(''); }
+}
+function beautifyBody() {
+    var raw=$('#bodyData').val().trim(); if(!raw) return;
+    var type=detectBodyType(raw); $('#bodyType').val(type);
+    if(type==='json'){ try{$('#bodyData').val(JSON.stringify(JSON.parse(raw),null,4));flashTA(true);}catch(e){$('#bodyValidMsg').text('✖ '+e.message).css('color','#991b1b');flashTA(false);return;} }
+    else if(type==='xml'){ try{$('#bodyData').val(beautifyXml(raw));flashTA(true);}catch(e){$('#bodyValidMsg').text('✖ Invalid XML').css('color','#991b1b');flashTA(false);return;} }
+    else { $('#bodyValidMsg').text('Nothing to beautify for plain text.').css('color','#6b7280'); return; }
+    onBodyInput();
+}
+function clearBody(){ $('#bodyData').val(''); $('#bodyDetectBadge').hide(); $('#bodyValidMsg').text(''); }
+function flashTA(ok){ var c=ok?'flash-ok':'flash-error'; $('#bodyData').addClass(c); setTimeout(function(){ $('#bodyData').removeClass(c); },600); }
+function beautifyXml(xml) {
+    var doc=new DOMParser().parseFromString(xml,'application/xml');
+    if(doc.querySelector('parsererror')) throw new Error('Invalid XML');
+    return serXml(doc.documentElement,0);
+}
+function serXml(node,depth) {
+    var pad='    '.repeat(depth), out='';
+    if(node.nodeType===3){ var t=node.nodeValue.trim(); return t?pad+t+'\n':''; }
+    if(node.nodeType===8){ return pad+'<!--'+node.nodeValue+'-->\n'; }
+    var tag=node.tagName, attrs='';
+    for(var i=0;i<node.attributes.length;i++){ var a=node.attributes[i]; attrs+=' '+a.name+'="'+a.value+'"'; }
+    var kids=Array.from(node.childNodes);
+    if(!kids.length) return pad+'<'+tag+attrs+'/>\n';
+    if(kids.length===1&&kids[0].nodeType===3) return pad+'<'+tag+attrs+'>'+kids[0].nodeValue.trim()+'</'+tag+'>\n';
+    out=pad+'<'+tag+attrs+'>\n';
+    kids.forEach(function(c){ out+=serXml(c,depth+1); });
+    return out+pad+'</'+tag+'>\n';
+}
+
+/* ════════════════════════════════════════
+   COLLECTIONS — RENDER
+════════════════════════════════════════ */
+function renderCollections() {
+    if (!collections.length) {
+        $('#collection-list').html('<div class="sidebar-empty"><div class="empty-icon">📂</div>No collections yet.<br>Click <b>+ New</b> to create one.</div>');
+        return;
+    }
+    var html='';
+    collections.forEach(function(col) {
+        var count=col.items.length;
+        html+='<div class="col-group" id="cg-'+col.id+'">';
+        /* header row */
+        html+='<div class="col-group-hdr '+(col.open?'open':'')+'" '
+             +'onclick="toggleCollection(\''+col.id+'\')" '
+             +'oncontextmenu="showCtxCol(event,\''+col.id+'\')">'
+             +'<span class="col-icon">&#9654;</span>'
+             +'<span class="col-name" title="'+escHtml(col.name)+'">'+escHtml(col.name)+'</span>'
+             +'<span class="col-count">'+count+'</span>'
+             +'<div class="col-actions" onclick="event.stopPropagation()">'
+             +'  <button class="col-act-btn" onclick="openRenameColModal(\''+col.id+'\')" title="Rename">✏️</button>'
+             +'  <button class="col-act-btn" onclick="openAddReqModal(\''+col.id+'\')" title="Add request">➕</button>'
+             +'  <button class="col-act-btn danger" onclick="deleteCollection(\''+col.id+'\')" title="Delete">🗑</button>'
+             +'</div>'
+             +'</div>';
+        /* items */
+        html+='<div class="col-items '+(col.open?'open':'')+'" id="ci-'+col.id+'">';
+        if (!col.items.length) {
+            html+='<div style="padding:6px 12px 6px 28px;font-size:11px;color:#475569;font-style:italic">No requests yet</div>';
+        }
+        col.items.forEach(function(item) {
+            var cls=methodCls(item.method);
+            html+='<div class="col-item" id="cii-'+item.id+'" '
+                 +'onclick="loadItem(\''+col.id+'\',\''+item.id+'\')" '
+                 +'oncontextmenu="showCtxReq(event,\''+col.id+'\',\''+item.id+'\')">'
+                 +'<span class="item-method '+cls+'">'+item.method+'</span>'
+                 +'<span class="item-name" title="'+escHtml(item.name)+'">'+escHtml(item.name)+'</span>'
+                 +'<div class="item-actions" onclick="event.stopPropagation()">'
+                 +'  <button class="item-act-btn" onclick="openEditReqModal(\''+col.id+'\',\''+item.id+'\')" title="Edit">✏️</button>'
+                 +'  <button class="item-act-btn danger" onclick="deleteColItem(\''+col.id+'\',\''+item.id+'\')" title="Delete">🗑</button>'
+                 +'</div>'
+                 +'</div>';
+        });
+        html+='</div></div>';
+    });
+    $('#collection-list').html(html);
+}
+
+/* ════════════════════════════════════════
+   COLLECTIONS — ACTIONS
+════════════════════════════════════════ */
+function toggleCollection(colId) {
+    var col=findCol(colId); if(col){ col.open=!col.open; persist(); renderCollections(); }
+}
+
+function loadItem(colId, itemId) {
+    var col=findCol(colId); if(!col) return;
+    var item=col.items.find(function(i){ return i.id===itemId; }); if(!item) return;
+    addNewTab(item.name, item.method, item.url, item.params||[], item.headers||[]);
+    $('.col-item').removeClass('active');
+    $('#cii-'+itemId).addClass('active');
+    $('#req-breadcrumb').text('— '+col.name);
+}
+
+/* ──── Add Collection ──── */
+function openAddCollectionModal() {
+    $('#colModalTitle').text('New Collection');
+    $('#colNameInput').val('');
+    $('#colModalDesc').text('All your saved requests will appear inside this collection.');
+    $('#colModalSaveBtn').text('Create').off('click').on('click', function(){ createCollection(); });
+    $('#colModal').modal('show');
+    setTimeout(function(){ $('#colNameInput').focus(); },300);
+}
+function createCollection() {
+    var name=$('#colNameInput').val().trim(); if(!name) return;
+    collections.push({ id:'col-'+Date.now(), name:name, open:true, items:[] });
+    persist(); renderCollections(); $('#colModal').modal('hide');
+    showToast('Collection "'+name+'" created');
+}
+
+/* ──── Rename Collection ──── */
+function openRenameColModal(colId) {
+    var col=findCol(colId); if(!col) return;
+    $('#colModalTitle').text('Rename Collection');
+    $('#colNameInput').val(col.name);
+    $('#colModalDesc').text('');
+    $('#colModalSaveBtn').text('Save').off('click').on('click', function(){ renameCollection(colId); });
+    $('#colModal').modal('show');
+    setTimeout(function(){ $('#colNameInput').select(); },300);
+}
+function renameCollection(colId) {
+    var name=$('#colNameInput').val().trim(); if(!name) return;
+    var col=findCol(colId); if(!col) return;
+    col.name=name; persist(); renderCollections(); $('#colModal').modal('hide');
+    showToast('Renamed to "'+name+'"');
+}
+
+/* ──── Delete Collection ──── */
+function deleteCollection(colId) {
+    var col=findCol(colId); if(!col) return;
+    if(!confirm('Delete collection "'+col.name+'" and all its requests?')) return;
+    collections=collections.filter(function(c){ return c.id!==colId; });
+    persist(); renderCollections();
+    showToast('Collection deleted');
+}
+
+/* ──── Add Request to Collection (from sidebar +) ──── */
+function openAddReqModal(colId) {
+    var col=findCol(colId); if(!col) return;
+    $('#reqModalTitle').text('Add Request to "'+escHtml(col.name)+'"');
+    $('#reqModalName').val('');
+    $('#reqModalMethod').val('GET');
+    $('#reqModalUrl').val('');
+    $('#reqModalUrlRow').show();
+    $('#reqModalSaveBtn').text('Add').off('click').on('click', function(){ addReqToCol(colId); });
+    $('#reqModal').modal('show');
+    setTimeout(function(){ $('#reqModalName').focus(); },300);
+}
+function addReqToCol(colId) {
+    var col=findCol(colId); if(!col) return;
+    var name=$('#reqModalName').val().trim()||'New Request';
+    var method=$('#reqModalMethod').val();
+    var url=$('#reqModalUrl').val().trim();
+    col.items.push({ id:'req-'+Date.now(), name:name, method:method, url:url, params:[], headers:[] });
+    col.open=true; persist(); renderCollections(); $('#reqModal').modal('hide');
+    showToast('Request added to "'+col.name+'"');
+}
+
+/* ──── Edit Request (rename + change method/url) ──── */
+function openEditReqModal(colId, itemId) {
+    var col=findCol(colId); if(!col) return;
+    var item=col.items.find(function(i){ return i.id===itemId; }); if(!item) return;
+    $('#reqModalTitle').text('Edit Request');
+    $('#reqModalName').val(item.name);
+    $('#reqModalMethod').val(item.method);
+    $('#reqModalUrl').val(item.url);
+    $('#reqModalUrlRow').show();
+    $('#reqModalSaveBtn').text('Save').off('click').on('click', function(){ saveEditedReq(colId,itemId); });
+    $('#reqModal').modal('show');
+    setTimeout(function(){ $('#reqModalName').select(); },300);
+}
+function saveEditedReq(colId, itemId) {
+    var col=findCol(colId); if(!col) return;
+    var item=col.items.find(function(i){ return i.id===itemId; }); if(!item) return;
+    item.name   = $('#reqModalName').val().trim()||item.name;
+    item.method = $('#reqModalMethod').val();
+    item.url    = $('#reqModalUrl').val().trim();
+    persist(); renderCollections(); $('#reqModal').modal('hide');
+    showToast('Request updated');
+    /* also update active tab if it matches */
+    var t=getTab(activeTabId);
+    if(t && t.url===item.url && t.method===item.method) { t.name=item.name; renderTabBar(); }
+}
+
+/* ──── Rename Request (name only) ──── */
+function openRenameReqInCol(colId, itemId) {
+    var col=findCol(colId); if(!col) return;
+    var item=col.items.find(function(i){ return i.id===itemId; }); if(!item) return;
+    $('#reqModalTitle').text('Rename Request');
+    $('#reqModalName').val(item.name);
+    $('#reqModalUrlRow').hide();
+    $('#reqModalSaveBtn').text('Rename').off('click').on('click', function(){
+        var newName=$('#reqModalName').val().trim(); if(!newName) return;
+        item.name=newName; persist(); renderCollections(); $('#reqModal').modal('hide');
+        showToast('Renamed to "'+newName+'"');
+    });
+    $('#reqModal').modal('show');
+    setTimeout(function(){ $('#reqModalName').select(); },300);
+}
+
+/* Rename the active REQUEST (name bar click) */
+function openRenameReqModal() {
+    var t=getTab(activeTabId); if(!t) return;
+    $('#reqModalTitle').text('Rename Request');
+    $('#reqModalName').val(t.name);
+    $('#reqModalUrlRow').hide();
+    $('#reqModalSaveBtn').text('Rename').off('click').on('click', function(){
+        var n=$('#reqModalName').val().trim(); if(!n) return;
+        t.name=n; renderTabBar(); $('#req-display-name').text(n);
+        persist(); $('#reqModal').modal('hide');
+        showToast('Renamed to "'+n+'"');
+    });
+    $('#reqModal').modal('show');
+    setTimeout(function(){ $('#reqModalName').select(); },300);
+}
+
+/* ──── Duplicate Request ──── */
+function duplicateColItem(colId, itemId) {
+    var col=findCol(colId); if(!col) return;
+    var item=col.items.find(function(i){ return i.id===itemId; }); if(!item) return;
+    var copy=JSON.parse(JSON.stringify(item));
+    copy.id='req-'+Date.now(); copy.name=item.name+' (copy)';
+    col.items.push(copy); persist(); renderCollections();
+    showToast('Duplicated "'+item.name+'"');
+}
+
+/* ──── Delete Request ──── */
+function deleteColItem(colId, itemId) {
+    var col=findCol(colId); if(!col) return;
+    var item=col.items.find(function(i){ return i.id===itemId; });
+    if(!confirm('Delete request "'+((item&&item.name)||'this request')+'"?')) return;
+    col.items=col.items.filter(function(i){ return i.id!==itemId; });
+    persist(); renderCollections();
+    showToast('Request deleted');
+}
+
+function findCol(colId){ return collections.find(function(c){ return c.id===colId; }); }
+
+/* ════════════════════════════════════════
+   CONTEXT MENU
+════════════════════════════════════════ */
+function showCtxCol(e, colId) {
+    e.preventDefault(); e.stopPropagation();
+    ctxColId=colId; ctxItemId=null; ctxMode='col';
+    $('#ctx-rename-col,#ctx-add-req,#ctx-sep-1,#ctx-del-col').show();
+    $('#ctx-rename-req,#ctx-edit-req,#ctx-dup-req,#ctx-sep-2,#ctx-del-req').hide();
+    positionCtx(e);
+}
+function showCtxReq(e, colId, itemId) {
+    e.preventDefault(); e.stopPropagation();
+    ctxColId=colId; ctxItemId=itemId; ctxMode='req';
+    $('#ctx-rename-col,#ctx-add-req,#ctx-sep-1,#ctx-del-col').hide();
+    $('#ctx-rename-req,#ctx-edit-req,#ctx-dup-req,#ctx-sep-2,#ctx-del-req').show();
+    positionCtx(e);
+}
+function positionCtx(e) {
+    var menu=$('#ctx-menu');
+    menu.css({ display:'block', left:e.clientX, top:e.clientY });
+    /* keep inside viewport */
+    var r=menu[0].getBoundingClientRect();
+    if(r.right>window.innerWidth)  menu.css('left', e.clientX-r.width);
+    if(r.bottom>window.innerHeight) menu.css('top', e.clientY-r.height);
+}
+function hideCtx(){ $('#ctx-menu').hide(); ctxColId=null; ctxItemId=null; ctxMode=null; }
+function ctxAction(action) {
+    hideCtx();
+    if(action==='rename-col')  openRenameColModal(ctxColId);
+    else if(action==='add-req')     openAddReqModal(ctxColId);
+    else if(action==='del-col')     deleteCollection(ctxColId);
+    else if(action==='rename-req')  openRenameReqInCol(ctxColId,ctxItemId);
+    else if(action==='edit-req')    { openEditReqModal(ctxColId,ctxItemId); }
+    else if(action==='dup-req')     duplicateColItem(ctxColId,ctxItemId);
+    else if(action==='del-req')     deleteColItem(ctxColId,ctxItemId);
+}
+
+/* ════════════════════════════════════════
+   SAVE REQUEST → COLLECTION
+════════════════════════════════════════ */
+function openSaveModal() {
+    captureTabState(activeTabId);
+    var t=getTab(activeTabId);
+    $('#saveReqName').val(t?t.name:'');
+    if(!collections.length) {
+        alert('Create a collection first (click + New in the sidebar).'); return;
+    }
+    $('#saveCollection').html(collections.map(function(c){
+        return '<option value="'+c.id+'">'+escHtml(c.name)+'</option>';
+    }).join(''));
+    $('#saveModal').modal('show');
+    setTimeout(function(){ $('#saveReqName').select(); },300);
+}
+function saveRequest() {
+    var name=$('#saveReqName').val().trim()||'Request';
+    var col=findCol($('#saveCollection').val()); if(!col) return;
+    captureTabState(activeTabId);
+    var t=getTab(activeTabId);
+    /* update existing item if already saved in this collection */
+    var existing=col.items.find(function(i){ return i.name===name || (t&&i.method===t.method&&i.url===t.url&&i.url!==''); });
+    if(existing && confirm('"'+existing.name+'" already exists in this collection. Overwrite?')) {
+        existing.name   = name;
+        existing.method = t?t.method:'GET';
+        existing.url    = t?t.url:'';
+        existing.params = t?t.params:[];
+        existing.headers= t?t.headers:[];
+    } else {
+        col.items.push({ id:'req-'+Date.now(), name:name, method:t?t.method:'GET', url:t?t.url:'', params:t?t.params:[], headers:t?t.headers:[] });
+    }
+    col.open=true;
+    if(t){ t.name=name; renderTabBar(); $('#req-display-name').text(name); }
+    persist(); renderCollections(); $('#saveModal').modal('hide');
+    showToast('Saved to "'+col.name+'"');
+}
+
+/* ════════════════════════════════════════
+   INNER TABS
+════════════════════════════════════════ */
+function switchInnerTab(el, panelId) {
+    $('.inner-tab').removeClass('active'); $(el).addClass('active');
+    $('.inner-tab-content').removeClass('active'); $('#'+panelId).addClass('active');
+    var t=getTab(activeTabId); if(t) t.innerTab=$('.inner-tab').index(el);
+}
+
+/* ════════════════════════════════════════
+   SEND REQUEST
+════════════════════════════════════════ */
+function sendRequest() {
+    var rawUrl=$('#url').val().trim();
+    if(!rawUrl){ alert('Please enter a URL.'); return; }
+    var method  =$('#method').val();
+    var params  = getKvPairs('pk','pv');
+    var hdrs    = getKvPairs('hk','hv');
+    var body    =$('#bodyData').val();
+    var bodyType=$('#bodyType').val();
+    var authType=$('#authType').val();
+    if(Object.keys(params).length) rawUrl+='?'+$.param(params);
+    if(authType==='basic')  hdrs['Authorization']='Basic ' +btoa($('#authUser').val()+':'+$('#authPass').val());
+    if(authType==='bearer') hdrs['Authorization']='Bearer '+$('#authToken').val();
+    if(authType==='aws')    hdrs['Authorization']='AWS '   +btoa($('#authAK').val()+':'+$('#authSK').val());
+    var apiUrl=method==='GET'?'@Url.Action("SendGetRequest","ApiConsole")':'@Url.Action("SendPostRequest","ApiConsole")';
+    $('#page-loader').addClass('show');
+    $('#btn-send').addClass('loading').prop('disabled',true);
+    $('#response').text('Sending...').css({color:'#9ca3af',fontStyle:'italic'});
+    $('#statusBadge').text('--').attr('class','status-badge status-def');
+    $('#time,#sizeLabel').text(''); $('#copyBtn').hide();
+    var t0=Date.now();
+    $.ajax({
+        url:apiUrl, type:'POST',
+        data:method==='GET'?{Url:rawUrl,Headers:JSON.stringify(hdrs)}:body,
+        processData:method==='GET',
+        contentType:method==='GET'?'application/x-www-form-urlencoded':(bodyType==='xml'?'application/xml':'application/json'),
+        headers:{'Url':rawUrl,'BodyType':bodyType,'CustomHeaders':JSON.stringify(hdrs)},
+        success:function(res,_s,xhr){ showResponse(res,xhr.status,t0,xhr); },
+        error:function(xhr){ var r=xhr.responseText; try{r=JSON.parse(r);}catch(e){} showResponse(r,xhr.status,t0,xhr); },
+        complete:function(){ $('#page-loader').removeClass('show'); $('#btn-send').removeClass('loading').prop('disabled',false); }
+    });
+}
+
+/* ════════════════════════════════════════
+   SHOW RESPONSE
+════════════════════════════════════════ */
+var statusTextMap={200:'OK',201:'Created',204:'No Content',301:'Moved Permanently',400:'Bad Request',401:'Unauthorized',403:'Forbidden',404:'Not Found',405:'Method Not Allowed',408:'Request Timeout',409:'Conflict',415:'Unsupported Media Type',422:'Unprocessable',429:'Too Many Requests',500:'Internal Server Error',502:'Bad Gateway',503:'Service Unavailable'};
+function syntaxHighlightJson(json) {
+    var str=JSON.stringify(json,null,4).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return str.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,function(m){
+        var cls='jn';
+        if(/^"/.test(m)) cls=/:$/.test(m)?'jk':'js';
+        else if(/true|false/.test(m)) cls='jb';
+        else if(/null/.test(m)) cls='jl';
+        return '<span class="'+cls+'">'+m+'</span>';
+    });
+}
+function showResponse(res, status, t0, xhr) {
+    var ms=Date.now()-t0;
+    var txt=statusTextMap[status]||'Unknown';
+    var cls=status>=500?'status-5xx':status>=400?'status-4xx':status>=200?'status-2xx':'status-def';
+    resetResTab();
+    $('#statusBadge').attr('class','status-badge '+cls).text(status+' '+txt);
+    $('#time').text(ms+' ms');
+    var isJson=false, formatted='';
+    try { var parsed=(typeof res==='object')?res:JSON.parse(res); formatted=syntaxHighlightJson(parsed); isJson=true; }
+    catch(e){ formatted=escHtml(String(res)); }
+    var rawText=isJson?JSON.stringify(typeof res==='object'?res:JSON.parse(res),null,4):String(res);
+    $('#sizeLabel').text((new Blob([rawText]).size/1024).toFixed(2)+' KB');
+    $('#response').html(formatted).css({color:'#111827',fontStyle:'normal'});
+    $('#copyBtn').show();
+    if(xhr&&xhr.getAllResponseHeaders){
+        var raw=xhr.getAllResponseHeaders(), hhtml='';
+        raw.trim().split('\n').forEach(function(line){
+            var parts=line.split(':');
+            if(parts.length>=2){ var k=parts[0].trim(),v=parts.slice(1).join(':').trim(); hhtml+='<div class="res-hdr-row"><span class="res-hdr-key">'+escHtml(k)+'</span><span class="res-hdr-val">'+escHtml(v)+'</span></div>'; }
+        });
+        $('#res-headers-list').html(hhtml||'<span style="color:#9ca3af">No headers available.</span>');
+    }
+    saveResponseToTab(activeTabId);
+}
+
+/* ════════════════════════════════════════
+   RESPONSE TABS
+════════════════════════════════════════ */
+function switchResTab(el, panelId) {
+    $('.res-tab').removeClass('active'); $(el).addClass('active');
+    $('#res-body-wrap').hide(); $('#res-headers-tab').hide();
+    $('#'+panelId).show();
+}
+function resetResTab() {
+    $('.res-tab').removeClass('active'); $('.res-tab').first().addClass('active');
+    $('#res-headers-tab').hide(); $('#res-body-wrap').show();
+}
+
+/* ════════════════════════════════════════
+   COPY
+════════════════════════════════════════ */
+function copyResponse() {
+    var text=$('#response').text(); if(!text) return;
+    if(navigator.clipboard&&window.isSecureContext) navigator.clipboard.writeText(text).then(showCopied).catch(function(){ fallbackCopy(text); });
+    else fallbackCopy(text);
+}
+function fallbackCopy(text) {
+    var el=document.createElement('textarea');
+    el.value=text; el.style.cssText='position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(el); el.focus(); el.select();
+    try{ document.execCommand('copy'); showCopied(); }catch(e){ alert('Copy failed.'); }
+    document.body.removeChild(el);
+}
+function showCopied(){ $('#copyBtn').text('Copied ✅'); setTimeout(function(){ $('#copyBtn').text('Copy'); },1500); }
+
+/* ════════════════════════════════════════
+   TOAST
+════════════════════════════════════════ */
+var _toastTimer=null;
+function showToast(msg) {
+    clearTimeout(_toastTimer);
+    $('#toast').text(msg).addClass('show');
+    _toastTimer=setTimeout(function(){ $('#toast').removeClass('show'); },2200);
+}
+
+/* ════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════ */
+function methodCls(m){ return {GET:'m-get',POST:'m-post',PUT:'m-put',DELETE:'m-delete',PATCH:'m-patch'}[m]||'m-get'; }
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
